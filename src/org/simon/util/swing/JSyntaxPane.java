@@ -24,6 +24,7 @@ public class JSyntaxPane extends JTextPane implements DocumentListener {
     
     private final SimpleAttributeSet afterKeywordAttribs;
     private final SimpleAttributeSet keywordAttribs;
+    private final SimpleAttributeSet commentAttribs;
     private final SimpleAttributeSet numberAttribs;
     private final SimpleAttributeSet stringAttribs;
     private final SimpleAttributeSet normalAttribs;
@@ -39,6 +40,9 @@ public class JSyntaxPane extends JTextPane implements DocumentListener {
         afterKeywordAttribs.addAttribute(StyleConstants.Bold, true);
         keywordAttribs = new SimpleAttributeSet ();
         keywordAttribs.addAttribute(StyleConstants.Foreground, Color.blue);
+        commentAttribs = new SimpleAttributeSet ();
+        commentAttribs.addAttribute(StyleConstants.Foreground, Color.gray);
+        commentAttribs.addAttribute(StyleConstants.Italic, true);
         numberAttribs = new SimpleAttributeSet ();
         numberAttribs.addAttribute(StyleConstants.Foreground, new Color (110,145,0));
         stringAttribs = new SimpleAttributeSet ();
@@ -80,9 +84,6 @@ public class JSyntaxPane extends JTextPane implements DocumentListener {
     
     
     
-    public void commitToken (String token) {
-        
-    }
     public void paintText () throws BadLocationException {
         StyledDocument doc = this.getStyledDocument();
         String token = "";
@@ -91,7 +92,19 @@ public class JSyntaxPane extends JTextPane implements DocumentListener {
         boolean lastTokenWasBackslash = false;
         Character stringify = null;
         
-        for (Character ch : (doc.getText(0, doc.getLength())+" ").toCharArray()) {
+        char[] chars = (doc.getText(0, doc.getLength())+" ").toCharArray();
+        for (Character ch : chars) {
+            if (ch=='/') {
+                if (position+1 < chars.length) {
+                    if (chars[position+1]==ch) {
+                        int len = this.getLineLength(position);
+                        doc.setCharacterAttributes(position, len, commentAttribs, true);
+                        position += len;
+                        continue;
+                    }
+                }
+            }
+            
             if ((ch=='\\') && (stringify!=null)) {
                 lastTokenWasBackslash = true;
                 token += ch;
@@ -160,6 +173,21 @@ public class JSyntaxPane extends JTextPane implements DocumentListener {
             position++;
         }
         doc.setCharacterAttributes(doc.getLength(), 1, normalAttribs, true);
+    }
+    
+    
+    
+    private int getLineLength (int start) throws BadLocationException {
+        StyledDocument doc = this.getStyledDocument();
+        int len = 0;
+        
+        for (;len<doc.getLength()-start;len++) {
+            char c = doc.getText(start+len,2).charAt(0);
+            if (c=='\n') return len;
+            len++;
+        }
+        
+        return -1;
     }
     
     

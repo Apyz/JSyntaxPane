@@ -87,13 +87,15 @@ public class JSyntaxPane extends JTextPane implements DocumentListener {
     public void paintText () throws BadLocationException {
         StyledDocument doc = this.getStyledDocument();
         String token = "";
-        int position = 0;
         boolean lastTokenWasKeyword = false;
         boolean lastTokenWasBackslash = false;
         Character stringify = null;
         
+        int position;
         char[] chars = (doc.getText(0, doc.getLength())+" ").toCharArray();
-        for (Character ch : chars) {
+        for (position=0;position<chars.length;position++) {
+            Character ch = chars[position];
+            
             if (ch=='/') {
                 if (position+1 < chars.length) {
                     if (chars[position+1]==ch) {
